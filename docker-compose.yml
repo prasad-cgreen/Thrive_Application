@@ -1,0 +1,17 @@
+# xThrive website on port 3001. Point the Thrive domain (through your https proxy) at it.
+#
+#   docker compose up -d --build
+#
+# NEXT_PUBLIC_RELIVE_URL (where "Log in" goes) is compiled into the pages: set it in a .env file
+# (copy .env.example) or your shell before building. Defaults to https://relive.co.in.
+
+services:
+  thrive:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_RELIVE_URL: ${NEXT_PUBLIC_RELIVE_URL:-https://relive.co.in}
+    image: thrive-web
+    ports:
+      - "3001:80"
+    restart: unless-stopped
