@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Icon, IconSpan } from "@/components/icon";
-import { loginUrl, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from "@/lib/content";
+import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from "@/lib/contact";
+import { loginUrl } from "@/lib/content";
 
 export const metadata: Metadata = { title: "Speak to us" };
 

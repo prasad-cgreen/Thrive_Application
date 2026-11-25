@@ -1,25 +1,19 @@
 import type { IconName } from "@/components/icon";
 
-/** Relive's site. Set at build time (NEXT_PUBLIC_RELIVE_URL), e.g. http://localhost:5173 when running both locally. */
+/** Relive's site, for the "overdue dues? Explore help through Relive" link. Set at build time (NEXT_PUBLIC_RELIVE_URL). */
 export const RELIVE_URL = process.env.NEXT_PUBLIC_RELIVE_URL || "https://relive.co.in";
 
 /**
- * Thrive has no login of its own yet: every "Log in" / "get started" button opens Relive's login (`?login=1`).
- * `from=thrive` (and the goal picked) let Relive tell these visitors apart once it reads them.
+ * Every "Log in" / "get started" button opens xThrive's login dialog (components/login-dialog.tsx): on the home page
+ * directly, from other pages after loading it. `goal` (a GOALS id) is saved as the user's concern once signed in.
+ * "Speak to us" and the other conversation buttons open /contact/ instead (support line: lib/contact.ts).
  */
-export const loginUrl = (goal?: string) => `${RELIVE_URL}/?login=1&from=thrive${goal ? `&goal=${goal}` : ""}`;
-
-/**
- * "Speak to us" and the other conversation buttons open /contact/ (app/contact/page.tsx) to call or email the team.
- * For now the CGreen support line Relive also shows (frontend/lib/contact.ts in the Relive repo); change these if Thrive gets its own.
- */
-export const SUPPORT_PHONE = "+91 82912 11398"; // display
-export const SUPPORT_TEL = "+918291211398"; // tel: links
-export const SUPPORT_EMAIL = "relive@cgreen.in";
+export const loginUrl = (goal?: string) => `/?login=1${goal ? `&goal=${goal}` : ""}`;
 
 export const SOURCE_RBI = "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12848";
 export const SOURCE_EMI = "https://www.icici.bank.in/personal-banking/loans/personal-loan/emi-calculator";
 
+// Each title without its full stop must be one of the backend's CONCERN_OPTIONS (shared/src/index.ts), same order.
 export const GOALS: { id: string; icon: IconName; title: string; desc: string }[] = [
   { id: "combine", icon: "layers", title: "I want to combine several EMIs.", desc: "Explore a simpler arrangement for eligible repayments." },
   { id: "monthly", icon: "wallet", title: "I want to explore a lower EMI.", desc: "Review what may fit my monthly budget." },
@@ -83,7 +77,7 @@ export const FAQS: [question: string, answer: string][] = [
   ],
   [
     "Can I speak to someone instead of filling a form?",
-    "Yes. Choose Speak to us, verify your mobile number and choose your callback preferences. You do not need to finish the financial assessment to request a conversation. In this design preview, requests stay in your browser and no callback is actually booked.",
+    "Yes. Choose Speak to us, verify your mobile number and choose your callback preferences. You do not need to finish the financial assessment to request a conversation.",
   ],
   [
     "What happens if I have overdue payments?",

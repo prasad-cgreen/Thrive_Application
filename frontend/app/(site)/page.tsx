@@ -1,4 +1,5 @@
 import { HeroCarousel } from "@/components/hero-carousel";
+import { LoginDialog } from "@/components/login-dialog";
 import { Icon, IconSpan, type IconName } from "@/components/icon";
 import { FAQS, GOALS, loginUrl, RELIVE_URL, SOURCE_EMI } from "@/lib/content";
 
@@ -142,7 +143,7 @@ export default function Home() {
           </div>
           <p className="section-note">
             <IconSpan name="info" />
-            Choose a goal to continue to login. Your selection comes with you.
+            Choose a goal to log in. Your selection comes with you.
           </p>
         </div>
       </section>
@@ -380,6 +381,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <LoginDialog />
 
       {/* Phones: the bar pinned to the bottom of the screen (home page only) */}
       <div className="mobile-bottom">

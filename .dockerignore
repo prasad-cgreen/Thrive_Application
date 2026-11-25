@@ -19,3 +19,6 @@ README.md
 Dockerfile
 docker-compose.yml
 .dockerignore
+backend/src/generated
+neon.ts
+.neon

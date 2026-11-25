@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Header } from "@/components/header";
-
-import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "xThrive by CGreen | Let’s simplify your EMIs", template: "%s | xThrive" },
@@ -14,64 +11,22 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#f4f7f2" };
 
+// Runs before the home page paints, hiding it while the page works out where the visitor should be:
+//  - a visitor who reached the dashboard before (see lib/session.ts), while it checks the session, so Back from
+//    /portal/ goes straight back to the dashboard without flashing the landing page;
+//  - ?login=1 (a "Log in" link from another page), until the login dialog is open, so it opens straight away.
+// The 4 s fallback un-hides it if that never happens. The hiding rule is in app/(site)/site.css.
+const authCheckScript = `try{if(location.pathname==="/"&&(/[?&]login=/.test(location.search)||localStorage.getItem("thrive:signed-in")==="1")){var d=document.documentElement;d.setAttribute("data-auth-check","");setTimeout(function(){d.removeAttribute("data-auth-check")},4000)}}catch(e){}`;
+
+// Styles come from each section's layout: app/(site)/layout.tsx (marketing pages) and app/portal/layout.tsx (dashboard).
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: authCheckScript sets data-auth-check on <html> before React hydrates.
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <a className="skip-link" href="#main-content">
-          Skip to content
-        </a>
-        <Header />
-        <main id="main-content" tabIndex={-1}>
-          {children}
-        </main>
-        <Footer />
+        <script dangerouslySetInnerHTML={{ __html: authCheckScript }} />
+        {children}
       </body>
     </html>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="site-footer">
-      <div className="wrap">
-        <div className="footer-top">
-          <a className="brand footer-brand" href="/">
-            <img className="thrive-logo" src="/thrive-logo.webp" alt="Thrive" />
-            <span className="brand-rule" />
-            <span className="parent-brand">
-              <span>by</span>
-              <img src="/cgreen-logo.webp" alt="CGreen" />
-            </span>
-          </a>
-          <p>
-            Simplify your repayments.
-            <br />
-            Make room for life.
-          </p>
-          <div className="footer-links">
-            <a href="/rights/">Your Rights</a>
-            <a href="/information/">Information</a>
-            <a href="/privacy/">Privacy</a>
-            <a href="/terms/">Terms &amp; charges</a>
-            <a href="/contact/">Contact &amp; support</a>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <p>
-            xThrive supports the review and application process; it is not a lender. Credit decisions and any offer remain with the
-            lending partner. Approval, reduced EMIs and savings are not guaranteed.
-          </p>
-          <p className="tiny">
-            Design preview for xthrive.ai &middot; No live OTP, callback, lender, bureau or AI connection. No borrower report is embedded.
-            Brand assets supplied by CGreen.
-          </p>
-          <div className="footer-meta">
-            <span>&copy; 2026 CGreen &middot; xThrive</span>
-            <span>Designed around you.</span>
-          </div>
-        </div>
-      </div>
-    </footer>
   );
 }

@@ -1,20 +1,50 @@
-# xThrive: web app.
+# xThrive: API + web app.
 #
-#   docker compose up -d --build         # start the web app (port 3001)
+#   docker compose run --rm migrate      # apply database migrations (once per release)
+#   docker compose up -d --build         # start the API (port 4200) and web app (port 3001)
 #
+# Secrets come from backend/.env at run time (never copied into the images): DATABASE_URL and
+# DATABASE_URL_UNPOOLED from the Neon project (the app uses the thrive_app and thrive_audit databases on that branch).
 # Browser-side settings are compiled into the web app, so set them in a root .env file
 # (copy .env.example) or your shell before building:
-#   NEXT_PUBLIC_RELIVE_URL=https://relive.co.in   (where the "Log in" buttons go)
-# Point the Thrive domain (through your https proxy) at port 3001.
+#   NEXT_PUBLIC_API_URL=https://api.xthrive.ai/api/v1
+#   NEXT_PUBLIC_TURNSTILE_SITE_KEY=<Cloudflare Turnstile site key>
+# and set FRONTEND_ORIGIN in backend/.env to the web app's address (e.g. https://xthrive.ai).
 
 services:
+  api:
+    build:
+      context: .
+      target: backend
+    image: thrive-api
+    env_file: backend/.env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      HOST: 0.0.0.0
+      PORT: 4200
+    ports:
+      - "4200:4200"
+    restart: unless-stopped
+
   web:
     build:
       context: .
       target: frontend
       args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4200/api/v1}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
         NEXT_PUBLIC_RELIVE_URL: ${NEXT_PUBLIC_RELIVE_URL:-https://relive.co.in}
     image: thrive-web
     ports:
       - "3001:80"
+    depends_on:
+      - api
     restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    image: thrive-migrate
+    env_file: backend/.env
+    profiles: ["tools"] # only runs when called: docker compose run --rm migrate

@@ -1,13 +1,73 @@
 # syntax=docker/dockerfile:1
 #
-# xThrive: one Dockerfile, built from the repository root (the same layout as Relive's).
+# xThrive: one Dockerfile, three images (the same layout as Relive's). Build from the repository root.
 #
+#   docker build --target backend  -t thrive-api .
 #   docker build --target frontend -t thrive-web \
-#     --build-arg NEXT_PUBLIC_RELIVE_URL=https://relive.co.in .
+#     --build-arg NEXT_PUBLIC_API_URL=https://api.xthrive.ai/api/v1 \
+#     --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY=<site key> .
+#   docker build --target migrate  -t thrive-migrate .
 #
-# Or use docker-compose.yml. .env files are excluded by .dockerignore.
+# Or use docker-compose.yml, which builds and runs all three. Secrets are never baked into an image:
+# .env files are excluded by .dockerignore and passed at run time instead.
 
 ARG NODE_IMAGE=node:22-bookworm-slim
+
+# ---------------------------------------------------------------- backend ----
+
+FROM ${NODE_IMAGE} AS backend-build
+# openssl: Prisma's migration engine needs it.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+# Manifests first, so dependency layers are cached until a package.json or the lockfile changes.
+COPY package.json package-lock.json ./
+COPY backend/package.json backend/
+COPY shared/package.json shared/
+COPY frontend/package.json frontend/
+RUN npm ci -w backend -w shared --no-audit --no-fund
+COPY shared shared
+COPY backend backend
+RUN npm run build -w shared
+# prisma generate only reads the schema; the URL just has to parse.
+RUN cd backend \
+ && DATABASE_URL_UNPOOLED=postgresql://build:build@localhost:5432/build npm run db:generate \
+ && npm run build
+
+# Production dependencies only (no Prisma CLI, TypeScript or test tools).
+FROM ${NODE_IMAGE} AS backend-deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY backend/package.json backend/
+COPY shared/package.json shared/
+COPY frontend/package.json frontend/
+RUN npm ci -w backend -w shared --omit=dev --no-audit --no-fund
+
+# Runs pending database migrations (production + audit), then exits.
+FROM backend-build AS migrate
+WORKDIR /app/backend
+USER node
+CMD ["npm", "run", "db:migrate"]
+
+FROM ${NODE_IMAGE} AS backend
+ENV NODE_ENV=production \
+    HOST=0.0.0.0 \
+    PORT=4200
+WORKDIR /app
+COPY --from=backend-deps /app/node_modules node_modules
+COPY package.json ./
+COPY shared/package.json shared/
+COPY --from=backend-build /app/shared/dist shared/dist
+COPY backend/package.json backend/
+COPY --from=backend-build /app/backend/dist backend/dist
+# The AI summary prompt is read from backend/prompts at run time.
+COPY backend/prompts backend/prompts
+# The API resolves prompts/ and .env relative to its working directory.
+WORKDIR /app/backend
+USER node
+EXPOSE 4200
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+CMD ["node", "dist/server.js"]
 
 # --------------------------------------------------------------- frontend ----
 
@@ -18,8 +78,12 @@ COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
 RUN npm ci --no-audit --no-fund
 COPY frontend ./
 # NEXT_PUBLIC_* values are compiled into the browser code, so they are build arguments, not run-time env.
+ARG NEXT_PUBLIC_API_URL=http://localhost:4200/api/v1
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 ARG NEXT_PUBLIC_RELIVE_URL=https://relive.co.in
-ENV NEXT_PUBLIC_RELIVE_URL=${NEXT_PUBLIC_RELIVE_URL}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY} \
+    NEXT_PUBLIC_RELIVE_URL=${NEXT_PUBLIC_RELIVE_URL}
 RUN npm run build
 
 # A static export (frontend/out): nginx serves the files, no Node at run time.

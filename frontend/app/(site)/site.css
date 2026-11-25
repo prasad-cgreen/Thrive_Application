@@ -1,0 +1,26 @@
+/* The marketing pages: Thrive's own styles (thrive.css) plus Tailwind for the login dialog (components/login-dialog.tsx).
+   Thrive's styles sit in a layer between Tailwind's reset (base) and its utility classes, so the pages keep their look
+   and the dialog's Tailwind classes still win over Thrive's element styles (h2, button, p...). */
+@layer theme, base, thrive, components, utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./thrive.css" layer(thrive);
+
+/* Light-only: `dark:` styles never apply (they follow a .dark class that is never set). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+/* Arriving to log in, or a member who reached the dashboard (see app/layout.tsx): hidden until the dialog opens
+   or the session check sends them on, so the landing page does not flash first. */
+html[data-auth-check] body { visibility: hidden; }
+
+/* Two things Tailwind's reset changes that Thrive's pages left to the browser: list bullets, and the box sizing
+   of the hero picture's circles. */
+@layer thrive {
+  .prose ul { list-style: disc; }
+  .prose ol { list-style: decimal; }
+  .tc-visual::before, .tc-visual::after { box-sizing: content-box; }
+}
