@@ -45,7 +45,9 @@ docker compose run --rm migrate      # apply database migrations (once per relea
 docker compose up -d --build         # API on port 4200, web app on port 3001
 ```
 
-On the server, `backend/.env` holds the secrets (database URLs, `SESSION_SECRET`, `OTP_PEPPER`, `DATA_ENCRYPTION_KEY`, provider keys, `TURNSTILE_SECRET_KEY`) and `FRONTEND_ORIGIN` (e.g. `https://xthrive.ai`). Browser settings are compiled into the web app: set `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in a root `.env` (copy `.env.example`) before building. Point the Thrive domain at port 3001 and the API domain at port 4200 through your https proxy.
+On the server, `backend/.env` holds the secrets (database URLs, `SESSION_SECRET`, `OTP_PEPPER`, `DATA_ENCRYPTION_KEY`, provider keys, `TURNSTILE_SECRET_KEY`) and `FRONTEND_ORIGIN=https://xthrive.ai`. Browser settings are compiled into the web app, and the Docker build defaults them for xthrive.ai: API `https://api.xthrive.ai/api/v1` and Google Tag Manager `GTM-KP4KGD5M` (Google Analytics); override them, and set `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, in a root `.env` (copy `.env.example`) before building. Point `xthrive.ai` at port 3001 and `api.xthrive.ai` at port 4200 through your https proxy.
+
+Google Tag Manager only loads in builds with `NEXT_PUBLIC_GTM_ID` set (the Docker build), so local `npm run dev` visits aren't counted. Never push personal data (mobile, PAN, name, score) to `dataLayer`.
 
 `frontend/` has its own `package-lock.json` because Docker builds it on its own. After adding or upgrading a frontend package, refresh that lockfile too (for example `npm install --package-lock-only` in a copy of `frontend/` outside the workspace).
 

@@ -5,11 +5,10 @@
 #
 # Secrets come from backend/.env at run time (never copied into the images): DATABASE_URL and
 # DATABASE_URL_UNPOOLED from the Neon project (the app uses the thrive_app and thrive_audit databases on that branch).
-# Browser-side settings are compiled into the web app, so set them in a root .env file
-# (copy .env.example) or your shell before building:
-#   NEXT_PUBLIC_API_URL=https://api.xthrive.ai/api/v1
-#   NEXT_PUBLIC_TURNSTILE_SITE_KEY=<Cloudflare Turnstile site key>
-# and set FRONTEND_ORIGIN in backend/.env to the web app's address (e.g. https://xthrive.ai).
+# Browser-side settings are compiled into the web app. The defaults below build it for xthrive.ai
+# (API https://api.xthrive.ai/api/v1, Google Tag Manager GTM-KP4KGD5M); override them in a root .env file
+# (copy .env.example) or your shell before building, e.g. NEXT_PUBLIC_TURNSTILE_SITE_KEY=<site key>.
+# Set FRONTEND_ORIGIN=https://xthrive.ai in backend/.env so the API accepts calls from the site.
 
 services:
   api:
@@ -31,9 +30,11 @@ services:
       context: .
       target: frontend
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4200/api/v1}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.xthrive.ai/api/v1}
         NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
         NEXT_PUBLIC_RELIVE_URL: ${NEXT_PUBLIC_RELIVE_URL:-https://relive.co.in}
+        # "-" not ":-": NEXT_PUBLIC_GTM_ID= (set but blank) builds without tracking.
+        NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID-GTM-KP4KGD5M}
     image: thrive-web
     ports:
       - "3001:80"

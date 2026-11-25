@@ -18,12 +18,24 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 // The 4 s fallback un-hides it if that never happens. The hiding rule is in app/(site)/site.css.
 const authCheckScript = `try{if(location.pathname==="/"&&(/[?&]login=/.test(location.search)||localStorage.getItem("thrive:signed-in")==="1")){var d=document.documentElement;d.setAttribute("data-auth-check","");setTimeout(function(){d.removeAttribute("data-auth-check")},4000)}}catch(e){}`;
 
+// Google tag (Tag Manager container GTM-KP4KGD5M), for Google Analytics on xthrive.ai. Only loaded when
+// NEXT_PUBLIC_GTM_ID is set at build time: the Docker build sets it, local development leaves it blank so test visits
+// are not counted. Never push personal data (mobile, PAN, name, score) to dataLayer.
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID ?? "";
+const googleTagScript = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());`;
+
 // Styles come from each section's layout: app/(site)/layout.tsx (marketing pages) and app/portal/layout.tsx (dashboard).
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     // suppressHydrationWarning: authCheckScript sets data-auth-check on <html> before React hydrates.
     <html lang="en" suppressHydrationWarning>
       <body>
+        {GTM_ID && (
+          <>
+            <script async src={`https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(GTM_ID)}`} />
+            <script dangerouslySetInnerHTML={{ __html: googleTagScript }} />
+          </>
+        )}
         <script dangerouslySetInnerHTML={{ __html: authCheckScript }} />
         {children}
       </body>
