@@ -6,7 +6,7 @@
 #   docker build --target frontend -t thrive-web --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY=<site key> .
 #   docker build --target migrate  -t thrive-migrate .
 #
-# The web image is built for xthrive.ai by default: API at https://api.xthrive.ai/api/v1, Google Tag Manager
+# The web image is built for xthrive.ai by default: API at https://xthrive.ai/api/v1, Google Tag Manager
 # GTM-KP4KGD5M. Override with --build-arg (NEXT_PUBLIC_GTM_ID= builds without tracking).
 #
 # Or use docker-compose.yml, which builds and runs all three. Secrets are never baked into an image:
@@ -79,7 +79,7 @@ COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
 RUN npm ci --no-audit --no-fund
 COPY frontend ./
 # NEXT_PUBLIC_* values are compiled into the browser code, so they are build arguments, not run-time env.
-ARG NEXT_PUBLIC_API_URL=https://api.xthrive.ai/api/v1
+ARG NEXT_PUBLIC_API_URL=https://xthrive.ai/api/v1
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 ARG NEXT_PUBLIC_RELIVE_URL=https://relive.co.in
 # Google Tag Manager container (public id) that carries Google Analytics. Blank = no tracking.

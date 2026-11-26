@@ -45,7 +45,7 @@ docker compose run --rm migrate      # apply database migrations (once per relea
 docker compose up -d --build         # API on port 4200, web app on port 3001
 ```
 
-On the server, `backend/.env` holds the secrets (database URLs, `SESSION_SECRET`, `OTP_PEPPER`, `DATA_ENCRYPTION_KEY`, provider keys, `TURNSTILE_SECRET_KEY`) and `FRONTEND_ORIGIN=https://xthrive.ai`. Browser settings are compiled into the web app, and the Docker build defaults them for xthrive.ai: API `https://api.xthrive.ai/api/v1` and Google Tag Manager `GTM-KP4KGD5M` (Google Analytics); override them, and set `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, in a root `.env` (copy `.env.example`) before building. Point `xthrive.ai` at port 3001 and `api.xthrive.ai` at port 4200 through your https proxy.
+On the server, `backend/.env` holds the secrets (database URLs, `SESSION_SECRET`, `OTP_PEPPER`, `DATA_ENCRYPTION_KEY`, provider keys, `TURNSTILE_SECRET_KEY`) and `FRONTEND_ORIGIN=https://xthrive.ai`. Browser settings are compiled into the web app, and the Docker build defaults them for xthrive.ai: API `https://xthrive.ai/api/v1` and Google Tag Manager `GTM-KP4KGD5M` (Google Analytics); override them, and set `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, in a root `.env` (copy `.env.example`) before building. The https proxy for `xthrive.ai` serves the site (port 3001) and passes `/api/` to the API (port 4200), as Relive does on `relive.co.in`: same address, so no mixed-content or cross-site cookie problems. Never build with an `http://` or bare-IP API address: browsers block it on the https site.
 
 Google Tag Manager only loads in builds with `NEXT_PUBLIC_GTM_ID` set (the Docker build), so local `npm run dev` visits aren't counted. Never push personal data (mobile, PAN, name, score) to `dataLayer`.
 
